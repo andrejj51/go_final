@@ -3,14 +3,18 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// repeat не пустой
-func repeatNotNill() (string, error) {
-	return "", errors.New("в колонке repeat — пустая строка")
+// repeat пустой
+func repeatNill(date time.Time) (string, error) {
+	if date.After(time.Now()) {
+		return date.Format("20060102"), nil
+	}
+	return time.Now().Format("20060102"), errors.New("так как указанная дата меньше текущей, то в задачу будет записана теекущая дата")
 }
 
 // d
@@ -49,9 +53,13 @@ func repeatDefault() (string, error) {
 }
 
 // data parse
-func dataParse(date string) time.Time {
-	v, _ := time.Parse("20060102", date)
-	return v
+func dataParse(date string) (time.Time, error) {
+	v, err := time.Parse("20060102", date)
+	if err != nil {
+		log.Println(err)
+		return time.Now(), err
+	}
+	return v, nil
 }
 
 // 1 <= d <= 7
@@ -83,11 +91,23 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 
 	switch {
 	case repeat == "":
-		return repeatNotNill()
+		v, err := dataParse(date)
+		if err != nil {
+			log.Println(err)
+		}
+		return repeatNill(v)
 	case []rune(repeat)[0] == 'd' && []rune(repeat)[1] == ' ':
-		return repeatD(now, dataParse(date), repeat)
+		v, err := dataParse(date)
+		if err != nil {
+			log.Println(err)
+		}
+		return repeatD(now, v, repeat)
 	case []rune(repeat)[0] == 'y' && len([]rune(repeat)) == 1:
-		return repeatY(now, dataParse(date), repeat)
+		v, err := dataParse(date)
+		if err != nil {
+			log.Println(err)
+		}
+		return repeatY(now, v, repeat)
 	case []rune(repeat)[0] == 'w' && []rune(repeat)[1] == ' ':
 		return "", errors.New("в разработке ")
 		//return repeatW(now, dataParse(date), repeat)

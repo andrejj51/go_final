@@ -39,7 +39,9 @@ func main() {
 	// api
 	r.Get("/api/nextdate", handlerApiNextDate)
 	r.Get("/api/nextdate?now={now}", handlerApiNextDate)
-	r.Post("/api/task", handlerApiTask)
+	r.Post("/api/task", handlerApiTaskPost)
+	r.Get("/api/tasks", handlerApiTaskGet)
+	r.Get("/api/task", handlerApiTaskEdit)
 
 	// запуск сервера
 	port := fmt.Sprintf(":%s", envPort)
