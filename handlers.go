@@ -172,3 +172,70 @@ func handlerApiTaskEdit(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Write(encodedJSON)
 }
+
+// put
+func handlerApiTaskPut(w http.ResponseWriter, r *http.Request) {
+	storage, err := New(EnvDBPath, EnvDB)
+	if err != nil {
+		panic(err)
+	}
+
+	var task TaskAndId
+	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
+		log.Println("Ошибка при декодировании JSON:", err)
+		return
+	}
+
+	if task.Date == "" {
+		task.Date = time.Now().Format("20060102")
+	}
+
+	v, err := time.Parse("20060102", task.Date)
+	if err != nil {
+		log.Println(err)
+	}
+	if v.Before(time.Now()) {
+		if task.Repeat == "" {
+			task.Date = time.Now().Format("20060102")
+		}
+		if task.Repeat != "" {
+			d, err := NextDate(time.Now(), task.Date, task.Repeat)
+			if err != nil {
+				log.Println(err)
+			}
+			task.Date = d
+		}
+	}
+	_, err = NextDate(time.Now(), task.Date, task.Repeat)
+	if err != nil {
+		log.Println(err)
+		e := Error{Error: err.Error()}
+		// Кодирование ошибки в JSON
+		encodedJSON, err := json.Marshal(e)
+		if err != nil {
+			log.Println("Ошибка при кодировании JSON:", err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		//w.WriteHeader(http.StatusCreated)
+		//json.NewEncoder(w).Encode(encodedJSON)
+		w.Write(encodedJSON)
+		return
+	}
+	//task.Date = d
+
+	err = storage.Put(task)
+
+	if err != nil {
+		e := Error{Error: err.Error()}
+		// Кодирование ошибки в JSON
+		encodedJSON, err := json.Marshal(e)
+		if err != nil {
+			log.Println("Задача не найдена", err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Write(encodedJSON)
+		return
+	}
+}

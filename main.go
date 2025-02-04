@@ -42,6 +42,8 @@ func main() {
 	r.Post("/api/task", handlerApiTaskPost)
 	r.Get("/api/tasks", handlerApiTaskGet)
 	r.Get("/api/task", handlerApiTaskEdit)
+	r.Get("/api/task?id={id}", handlerApiTaskEdit)
+	r.Put("/api/task", handlerApiTaskPut)
 
 	// запуск сервера
 	port := fmt.Sprintf(":%s", envPort)
