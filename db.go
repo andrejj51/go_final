@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -144,7 +145,17 @@ func (s Storage) GetId(id string) (TaskAndId, error) {
 
 // Put
 func (s Storage) Put(t TaskAndId) error {
-	_, err := s.db.Exec("UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id",
+	row := s.db.QueryRow("SELECT * FROM scheduler WHERE id = :id", sql.Named("id", t.Id))
+
+	var task TaskAndId = TaskAndId{}
+
+	err := row.Scan(&task.Id, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+
+	if err != nil {
+		return errors.New("задача не найдена")
+	}
+
+	_, err = s.db.Exec("UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat WHERE id = :id",
 		sql.Named("id", t.Id),
 		sql.Named("date", t.Date),
 		sql.Named("title", t.Title),
@@ -152,7 +163,9 @@ func (s Storage) Put(t TaskAndId) error {
 		sql.Named("repeat", t.Repeat))
 
 	if err != nil {
-		return err //errors.New("Задача не найдена")
+		return errors.New("задача не найдена")
 	}
+
 	return nil
+
 }
